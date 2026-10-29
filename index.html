@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weather</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg"></div>
+
+  <main class="app">
+    <form id="search" class="glass search" autocomplete="off">
+      <input id="query" type="text" placeholder="Search city" aria-label="Search city">
+      <button type="submit" aria-label="Search">Go</button>
+    </form>
+
+    <section class="glass current">
+      <h1 id="city">Boca Raton</h1>
+      <div id="temp" class="temp">--°</div>
+      <div id="condition" class="condition">Loading…</div>
+      <div id="hilo" class="hilo"></div>
+    </section>
+
+    <section class="glass">
+      <h2>Hourly Forecast</h2>
+      <div id="hourly" class="hourly"></div>
+    </section>
+
+    <section class="glass">
+      <h2>7-Day Forecast</h2>
+      <ul id="daily" class="daily"></ul>
+    </section>
+
+    <section class="details">
+      <div class="glass tile"><h2>Feels Like</h2><p id="feels">--</p></div>
+      <div class="glass tile"><h2>Humidity</h2><p id="humidity">--</p></div>
+      <div class="glass tile"><h2>Wind</h2><p id="wind">--</p></div>
+      <div class="glass tile"><h2>UV Index</h2><p id="uv">--</p></div>
+    </section>
+
+    <p class="credit">Data from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
