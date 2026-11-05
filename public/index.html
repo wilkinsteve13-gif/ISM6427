@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SongForge — AI Music Generator</title>
+  <meta name="description" content="Turn an idea into a full song with AI.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="glow"></div>
+
+  <header class="top">
+    <div class="brand">
+      <span class="logo">♪</span>
+      <span>SongForge</span>
+    </div>
+    <div class="credits" id="credits" title="Remaining Suno API credits">— credits</div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>Make a song in seconds.</h1>
+      <p>Describe it, or take full control of style and lyrics. Each run produces two versions.</p>
+    </section>
+
+    <section class="card composer">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-mode="simple" role="tab" aria-selected="true">Simple</button>
+        <button class="tab" data-mode="custom" role="tab" aria-selected="false">Custom</button>
+      </div>
+
+      <form id="form" autocomplete="off">
+        <!-- Simple mode -->
+        <div class="mode simple">
+          <label class="field">
+            <span>Describe your song</span>
+            <textarea id="prompt" rows="4" maxlength="3000" placeholder="An upbeat summer pop song about a road trip down the Florida coast with friends"></textarea>
+            <small class="count" data-for="prompt">0 / 3000</small>
+          </label>
+          <div class="chips" id="ideaChips"></div>
+        </div>
+
+        <!-- Custom mode -->
+        <div class="mode custom" hidden>
+          <label class="field">
+            <span>Title <em>optional</em></span>
+            <input id="title" type="text" maxlength="80" placeholder="Coastline Drive">
+          </label>
+          <label class="field">
+            <span>Style of music</span>
+            <input id="style" type="text" maxlength="1000" placeholder="indie pop, bright synths, female vocals, 120 bpm">
+          </label>
+          <div class="chips" id="styleChips"></div>
+          <label class="field lyrics-field">
+            <span class="row-between">
+              <span>Lyrics</span>
+              <button type="button" class="link" id="writeLyrics">✨ Write with AI</button>
+            </span>
+            <textarea id="lyrics" rows="10" maxlength="5000" placeholder="[Verse]&#10;Windows down, the sun is high&#10;&#10;[Chorus]&#10;..."></textarea>
+            <small class="count" data-for="lyrics">0 / 5000</small>
+          </label>
+          <details class="advanced">
+            <summary>Advanced</summary>
+            <label class="field">
+              <span>Styles to avoid</span>
+              <input id="negativeTags" type="text" maxlength="1000" placeholder="heavy metal, screaming">
+            </label>
+            <div class="grid2">
+              <label class="field">
+                <span>Vocals</span>
+                <select id="vocalGender">
+                  <option value="">Any</option>
+                  <option value="f">Female</option>
+                  <option value="m">Male</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Length <em id="durationLabel">auto</em></span>
+                <input id="duration" type="range" min="0" max="360" step="10" value="0">
+              </label>
+            </div>
+          </details>
+        </div>
+
+        <div class="controls">
+          <label class="toggle">
+            <input type="checkbox" id="instrumental">
+            <span class="switch"></span>
+            <span>Instrumental</span>
+          </label>
+          <select id="model" aria-label="Model">
+            <option value="V6">V6 · best quality</option>
+            <option value="V6_MINI">V6 Mini · fastest</option>
+            <option value="V6_WILD">V6 Wild · experimental</option>
+          </select>
+          <button type="submit" class="btn primary" id="createBtn">
+            <span class="btn-label">Create</span>
+          </button>
+        </div>
+        <p class="error" id="error" role="alert" hidden></p>
+      </form>
+    </section>
+
+    <section class="library">
+      <div class="row-between">
+        <h2>Your songs</h2>
+        <button class="link" id="clearAll" hidden>Clear history</button>
+      </div>
+      <p class="muted small">Saved in this browser. Audio links expire about 14 days after creation — download what you want to keep.</p>
+      <div id="songs" class="songs"></div>
+      <div id="empty" class="empty">No songs yet. Create your first one above.</div>
+    </section>
+  </main>
+
+  <!-- Lyrics helper dialog -->
+  <dialog id="lyricsDialog" class="card dialog">
+    <form method="dialog" id="lyricsForm">
+      <h3>Write lyrics with AI</h3>
+      <label class="field">
+        <span>What should it be about?</span>
+        <input id="lyricsPrompt" type="text" maxlength="200" placeholder="Growing up and letting go, bittersweet but hopeful" required>
+      </label>
+      <div id="lyricsResults" class="lyrics-results"></div>
+      <div class="controls end">
+        <button value="cancel" class="btn ghost" formnovalidate>Close</button>
+        <button type="button" class="btn primary" id="lyricsGo"><span class="btn-label">Generate</span></button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Password dialog (only shown if APP_PASSWORD is set on the server) -->
+  <dialog id="pwDialog" class="card dialog">
+    <form method="dialog" id="pwForm">
+      <h3>Enter access password</h3>
+      <label class="field">
+        <input id="pwInput" type="password" placeholder="Password" required>
+      </label>
+      <div class="controls end">
+        <button class="btn primary" value="ok">Unlock</button>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="songTpl">
+    <article class="song">
+      <div class="cover"><img alt="" loading="lazy"><div class="spinner"></div></div>
+      <div class="meta">
+        <div class="row-between">
+          <h3 class="s-title"></h3>
+          <span class="badge"></span>
+        </div>
+        <p class="s-tags muted small"></p>
+        <audio controls preload="none"></audio>
+        <div class="actions">
+          <a class="link dl" target="_blank" rel="noopener" download>Download MP3</a>
+          <button class="link show-lyrics" type="button">Lyrics</button>
+          <button class="link reuse" type="button">Reuse settings</button>
+          <button class="link remove" type="button">Remove</button>
+        </div>
+        <pre class="s-lyrics" hidden></pre>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
